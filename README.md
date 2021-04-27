@@ -1,6 +1,8 @@
 # Mixpanel Analytics
 
-[![Build Status](https://travis-ci.com/Alpha-health/mixpanel_analytics.svg?token=86N6VqHRALbz6yZmArqS&branch=master)](https://travis-ci.com/Alpha-health/mixpanel_analytics) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT) [![Pub](https://img.shields.io/pub/v/mixpanel_analytics.svg)](https://pub.dartlang.org/packages/mixpanel_analytics)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A fork of [mixpanel_analytics](https://github.com/koa-health/mixpanel_analytics), without null safetly and with encryption of localStorage data.
 
 A dart wrapper on the mixpanel REST API to be used in Flutter applications.
 As this is using the http REST API it works both with Android and iOS.

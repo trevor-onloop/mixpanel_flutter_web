@@ -313,13 +313,12 @@ class MixpanelAnalytics {
     while (events.isNotEmpty) {
       var maxRange = _getMaximumRange(events.length);
       var range = events.getRange(0, maxRange).toList();
-      // var decryptedList = [];
+      var decryptedList = [];
       for (var i = 0; i < range.length; i++) {
         String decryptedData = _decryptData(range[i]);
-        range[i] = decryptedData;
-        // decryptedList.add(json.encode(decryptedData));
+        decryptedList.add(json.encode(decryptedData));
       }
-      var batch = _base64Encoder(range);
+      var batch = _base64Encoder(decryptedList);
       var success = await sendFn(batch);
       if (!success) {
         unsentEvents.addAll(range);
@@ -494,11 +493,8 @@ class MixpanelAnalytics {
     /// Initialisation vector for AES encryption.
     /// This is a random string used during encryption.
     final initVector = encrypt.IV.fromSecureRandom(16);
-
-    String encodedData = json.encode(data);
-
+    final encodedData = json.encode(data);
     final encryptedData = _encrypter.encrypt(encodedData, iv: initVector);
-
     String result = initVector.base64 + encryptedData.base64;
 
     return result;

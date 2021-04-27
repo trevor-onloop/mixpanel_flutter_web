@@ -106,15 +106,8 @@ class MixpanelAnalytics {
   /// Proxy url to by pass CORs in flutter web
   String _proxyUrl;
 
-  /// Key for AES encryption
-  encrypt.Key _key;
-
   /// AES Encrypter
   encrypt.Encrypter _encrypter;
-
-  /// Initialisation vector for AES encryption.
-  /// This is a random string used during encryption.
-  final _iv = encrypt.IV.fromLength(16);
 
   /// Used in case we want to remove the timer to send batched events.
   void dispose() {
@@ -154,7 +147,7 @@ class MixpanelAnalytics {
     _shaFn = shaFn ?? _defaultShaFn;
     _userId$?.listen((id) => _userId = id);
     _proxyUrl = proxyUrl;
-    _key = key;
+    _encrypter = encrypt.Encrypter(encrypt.AES(key));
   }
 
   /// Provides an instance of this class.
@@ -189,7 +182,7 @@ class MixpanelAnalytics {
     _batchTimer = Timer.periodic(_uploadInterval, (_) => _uploadQueuedEvents());
     _userId$?.listen((id) => _userId = id);
     _proxyUrl = proxyUrl;
-    _key = key;
+    _encrypter = encrypt.Encrypter(encrypt.AES(key));
   }
 
   /// Sends a request to track a specific event.
@@ -226,7 +219,7 @@ class MixpanelAnalytics {
         _isQueuedEventsReadFromStorage = true;
       }
 
-      encrypt.Encrypted encryptedEvent = _encryptData(trackEvent);
+      String encryptedEvent = _encryptData(trackEvent);
       _trackEvents.add(encryptedEvent);
       return _saveQueuedEventsToLocalStorage();
     }
@@ -271,7 +264,7 @@ class MixpanelAnalytics {
         _isQueuedEventsReadFromStorage = true;
       }
 
-      encrypt.Encrypted encryptedEvent = _encryptData(engageEvent);
+      String encryptedEvent = _encryptData(engageEvent);
       _engageEvents.add(encryptedEvent);
       return _saveQueuedEventsToLocalStorage();
     }
@@ -320,12 +313,12 @@ class MixpanelAnalytics {
     while (events.isNotEmpty) {
       var maxRange = _getMaximumRange(events.length);
       var range = events.getRange(0, maxRange).toList();
-      var decodedList = [];
+      // var decryptedList = [];
       for (var i = 0; i < range.length; i++) {
         String decryptedData = _decryptData(range[i]);
-        decodedList.add(decryptedData);
+        range[i] = decryptedData;
+        // decryptedList.add(json.encode(decryptedData));
       }
-      print(decodedList);
       var batch = _base64Encoder(range);
       var success = await sendFn(batch);
       if (!success) {
@@ -497,23 +490,27 @@ class MixpanelAnalytics {
     }
   }
 
-  encrypt.Encrypted _encryptData(var data) {
+  String _encryptData(var data) {
+    /// Initialisation vector for AES encryption.
+    /// This is a random string used during encryption.
+    final initVector = encrypt.IV.fromSecureRandom(16);
+
     String encodedData = json.encode(data);
 
-    final encryptedData = _encrypter.encrypt(encodedData, iv: _iv);
+    final encryptedData = _encrypter.encrypt(encodedData, iv: initVector);
 
-    print(encryptedData);
+    String result = initVector.base64 + encryptedData.base64;
 
-    return encryptedData;
+    return result;
   }
 
-  String _decryptData(encrypt.Encrypted data) {
-    final dencryptedData = _encrypter.decrypt(data, iv: _iv);
+  String _decryptData(String data) {
+    final initVector = encrypt.IV.fromBase64(data.substring(0, 24));
 
-    var decodedData = json.decode(dencryptedData);
+    final dencryptedData = _encrypter.decrypt(
+        encrypt.Encrypted.fromBase64(data.substring(24)),
+        iv: initVector);
 
-    print(dencryptedData);
-
-    return decodedData;
+    return dencryptedData;
   }
 }

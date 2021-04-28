@@ -436,6 +436,7 @@ class MixpanelAnalytics {
       url = url.replaceFirst('https://', '');
       url = '$_proxyUrl/$url';
     }
+    print(batch);
     try {
       var response = await http.post(url, headers: {
         'Content-type': 'application/x-www-form-urlencoded',

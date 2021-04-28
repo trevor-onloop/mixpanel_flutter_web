@@ -208,7 +208,6 @@ class MixpanelAnalytics {
 
     var trackEvent = _createTrackEvent(
         event, properties, time ?? DateTime.now(), ip, insertId);
-
     if (isBatchMode) {
       // TODO: this should be place within an init() along within the constructor.
       // This is not perfect, as we are waiting for the caller to send an event before sending the stored in memory.
@@ -316,7 +315,7 @@ class MixpanelAnalytics {
       var decryptedList = [];
       for (var i = 0; i < range.length; i++) {
         String decryptedData = _decryptData(range[i]);
-        decryptedList.add(json.encode(decryptedData));
+        decryptedList.add(json.decode(decryptedData));
       }
       var batch = _base64Encoder(decryptedList);
       var success = await sendFn(batch);
@@ -436,8 +435,7 @@ class MixpanelAnalytics {
       url = url.replaceFirst('https://', '');
       url = '$_proxyUrl/$url';
     }
-    _onErrorHandler(url, 'URL');
-    _onErrorHandler(batch, 'BATCH');
+    
     try {
       var response = await http.post(url, headers: {
         'Content-type': 'application/x-www-form-urlencoded',

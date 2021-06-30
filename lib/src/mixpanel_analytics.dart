@@ -108,7 +108,7 @@ class MixpanelAnalytics {
   final String baseApiUrl;
 
   /// AES Encrypter
-  encrypt.Encrypter? _encrypter;
+  late encrypt.Encrypter _encrypter;
 
   /// Used in case we want to remove the timer to send batched events.
   void dispose() {
@@ -508,9 +508,7 @@ class MixpanelAnalytics {
     /// This is a random string used during encryption.
     final initVector = encrypt.IV.fromSecureRandom(16);
     final encodedData = json.encode(data);
-    final encryptedData = _encrypter == null
-        ? _encrypter?.encrypt(encodedData, iv: initVector)
-        : data;
+    final encryptedData = _encrypter.encrypt(encodedData, iv: initVector);
     String result = initVector.base64 + encryptedData.base64;
 
     return result;
@@ -519,12 +517,11 @@ class MixpanelAnalytics {
   String _decryptData(String data) {
     final initVector = encrypt.IV.fromBase64(data.substring(0, 24));
 
-    final dencryptedData = _encrypter == null
-        ? _encrypter?.decrypt(encrypt.Encrypted.fromBase64(data.substring(24)),
-            iv: initVector)
-        : data;
+    final dencryptedData = _encrypter.decrypt(
+        encrypt.Encrypted.fromBase64(data.substring(24)),
+        iv: initVector);
 
-    return dencryptedData ?? '';
+    return dencryptedData;
   }
 }
 
